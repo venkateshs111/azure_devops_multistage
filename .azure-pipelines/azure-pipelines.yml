@@ -15,6 +15,9 @@ stages:
 
   jobs:
   - job: BuildPushDev
+
+    pool:
+      name: Default
     steps:
     - script: mvn clean package
 
