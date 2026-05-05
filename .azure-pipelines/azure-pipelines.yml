@@ -1,0 +1,59 @@
+trigger:
+- dev
+- main
+
+variables:
+- name: imageName
+  value: 'venkateshs111/azure_devops_multistage'
+
+stages:
+
+- stage: Dev
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/dev')
+  variables:
+  - group: Devvariablegroup
+  - name: dockerRegistryServiceConnection
+    value: dockerhub-connection
+
+  jobs:
+  - job: BuildPushDev
+    steps:
+    - script: mvn clean package
+
+    - task: Docker@2
+      inputs:
+        containerRegistry: $(dockerRegistryServiceConnection)
+        repository: $(imageName)
+        command: buildAndPush
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          latest
+
+  - deployment: DeployDev
+    dependsOn: BuildPushDev
+    environment: dev1
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: |
+              docker pull $(imageName):latest
+              docker rm -f $(containerName) || true
+              docker run -d -p $(port):8080 -e COLOR=$(appColor) --name $(containerName) $(imageName):latest
+
+- stage: Prod
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+  variables:
+  - group: Prodvariablegroup
+
+  jobs:
+  - deployment: DeployProd
+    environment: prod1
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: |
+              docker pull $(imageName):latest
+              docker rm -f $(containerName) || true
+              docker run -d -p $(port):8080 -e COLOR=$(appColor) --name $(containerName) $(imageName):latest
