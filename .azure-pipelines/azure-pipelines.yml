@@ -74,7 +74,7 @@ stages:
           - script: |
               docker pull $(imageName):latest
 
-              docker ps -a --format "{{.Names}}" | findstr $(containerName) && docker rm -f $(containerName) || exit 0
+              docker rm -f $(containerName) || echo Container not found
 
               docker run -d -p $(port):8080 -e COLOR=$(appColor) --name $(containerName) $(imageName):latest
 
@@ -116,7 +116,7 @@ stages:
           - script: |
               docker pull $(imageName):latest
 
-              docker ps -a --format "{{.Names}}" | findstr $(containerName) && docker rm -f $(containerName) || exit 0
+              docker rm -f $(containerName) || echo Container not found
 
               docker run -d -p $(port):8080 -e COLOR=$(appColor) --name $(containerName) $(imageName):latest
 
