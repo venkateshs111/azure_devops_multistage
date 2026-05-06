@@ -13,7 +13,7 @@ public class HelloController {
     @GetMapping("/")
     public String home() {
         return "<html><body style='background-color:" + color + "; text-align:center;'>" +
-               "<h1>Spring Boot Hello World</h1>" +
+               "<h1>Spring Boot Hello World - Azure Multi Stage deployment</h1>" +
                "<h2>Color: " + color + "</h2>" +
                "</body></html>";
     }
