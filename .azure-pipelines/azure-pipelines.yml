@@ -8,53 +8,123 @@ variables:
 
 stages:
 
+# ================= DEV =================
 - stage: Dev
+  displayName: Dev Stage
+
   condition: eq(variables['Build.SourceBranch'], 'refs/heads/dev')
+
   variables:
   - group: Devvariablegroup
 
   jobs:
+
+  # ---------- BUILD ----------
   - job: BuildPushDev
+
+    displayName: Build and Push Docker Image
 
     pool:
       name: Default
+
     steps:
+
+    - script: |
+        hostname
+        docker version
+      displayName: Verify Self Hosted Agent
+
     - script: mvn clean package
+      displayName: Maven Build
 
     - task: Docker@2
+      displayName: Build and Push Image
       inputs:
         containerRegistry: dockerhub-connection
         repository: $(imageName)
         command: buildAndPush
         Dockerfile: '**/Dockerfile'
+        arguments: --no-cache
         tags: |
           latest
 
+
+  # ---------- DEPLOY ----------
   - deployment: DeployDev
+
+    displayName: Deploy to Dev
+
     dependsOn: BuildPushDev
+
     environment: dev1
+
+    pool:
+      name: Default
+
     strategy:
       runOnce:
         deploy:
           steps:
+
+          - script: |
+              hostname
+              docker ps -a
+            displayName: Verify Deployment Agent
+
           - script: |
               docker pull $(imageName):latest
-              docker rm -f $(containerName) || true
-              docker run -d -p $(port):8080 -e COLOR=$(appColor) --name $(containerName) $(imageName):latest
 
+              docker ps -a --format "{{.Names}}" | findstr $(containerName) && docker rm -f $(containerName) || exit 0
+
+              docker run -d -p $(port):8080 ^
+              -e COLOR=$(appColor) ^
+              --name $(containerName) ^
+              $(imageName):latest
+
+              docker ps
+            displayName: Run Dev Container
+
+
+# ================= PROD =================
 - stage: Prod
+
+  displayName: Prod Stage
+
   condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+
   variables:
   - group: Prodvariablegroup
 
   jobs:
+
   - deployment: DeployProd
+
+    displayName: Deploy to Prod
+
     environment: prod1
+
+    pool:
+      name: Default
+
     strategy:
       runOnce:
         deploy:
           steps:
+
+          - script: |
+              hostname
+              docker ps -a
+            displayName: Verify Deployment Agent
+
           - script: |
               docker pull $(imageName):latest
-              docker rm -f $(containerName) || true
-              docker run -d -p $(port):8080 -e COLOR=$(appColor) --name $(containerName) $(imageName):latest
+
+              docker ps -a --format "{{.Names}}" | findstr $(containerName) && docker rm -f $(containerName) || exit 0
+
+              docker run -d -p $(port):8080 ^
+              -e COLOR=$(appColor) ^
+              --name $(containerName) ^
+              $(imageName):latest
+
+              docker ps
+            displayName: Run Prod Container
