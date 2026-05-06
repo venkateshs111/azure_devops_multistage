@@ -76,10 +76,7 @@ stages:
 
               docker ps -a --format "{{.Names}}" | findstr $(containerName) && docker rm -f $(containerName) || exit 0
 
-              docker run -d -p $(port):8080 ^
-              -e COLOR=$(appColor) ^
-              --name $(containerName) ^
-              $(imageName):latest
+              docker run -d -p $(port):8080 -e COLOR=$(appColor) --name $(containerName) $(imageName):latest
 
               docker ps
             displayName: Run Dev Container
@@ -121,10 +118,7 @@ stages:
 
               docker ps -a --format "{{.Names}}" | findstr $(containerName) && docker rm -f $(containerName) || exit 0
 
-              docker run -d -p $(port):8080 ^
-              -e COLOR=$(appColor) ^
-              --name $(containerName) ^
-              $(imageName):latest
+              docker run -d -p $(port):8080 -e COLOR=$(appColor) --name $(containerName) $(imageName):latest
 
-              docker ps
+              docker ps -a
             displayName: Run Prod Container
